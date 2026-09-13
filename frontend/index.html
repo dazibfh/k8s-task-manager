@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>TaskFlow</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="app">
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+
+            <div class="logo">
+                <span class="logo-icon">✓</span>
+                <span>TaskFlow</span>
+            </div>
+
+            <nav>
+                <a href="#" class="nav-item active">
+                    <span>▣</span>
+                    Dashboard
+                </a>
+
+                <a href="#" class="nav-item">
+                    <span>✓</span>
+                    My Tasks
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <p>DevOps Project</p>
+                <small>Docker • Kubernetes</small>
+            </div>
+
+        </aside>
+
+
+        <!-- Main content -->
+        <main class="main">
+
+            <!-- Header -->
+            <header class="header">
+
+                <div>
+                    <p class="welcome">Welcome back 👋</p>
+                    <h1>Task Management</h1>
+                    <p class="subtitle">
+                        Organize your work and stay productive.
+                    </p>
+                </div>
+
+                <div class="profile">
+                    <div class="avatar">I</div>
+                    <span>Ismail</span>
+                </div>
+
+            </header>
+
+
+            <!-- Statistics -->
+            <section class="stats">
+
+                <div class="stat-card">
+                    <div class="stat-icon">📋</div>
+                    <div>
+                        <span>Total Tasks</span>
+                        <strong id="totalTasks">0</strong>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">✓</div>
+                    <div>
+                        <span>Completed</span>
+                        <strong id="completedTasks">0</strong>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">⏳</div>
+                    <div>
+                        <span>Pending</span>
+                        <strong id="pendingTasks">0</strong>
+                    </div>
+                </div>
+
+            </section>
+
+
+            <!-- Tasks -->
+            <section class="tasks-section">
+
+                <div class="section-header">
+
+                    <div>
+                        <h2>My Tasks</h2>
+                        <p>Manage your daily tasks</p>
+                    </div>
+
+                    <button class="add-button">
+                        + Add Task
+                    </button>
+
+                </div>
+
+
+                <div class="tasks-card">
+
+                    <ul id="tasks"></ul>
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+
+<!-- =========================
+     ADD / EDIT TASK MODAL
+     ========================= -->
+
+<div id="taskModal" class="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2 id="modalTitle">Add New Task</h2>
+
+            <button
+                class="close-button"
+                onclick="closeTaskModal()"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <div class="modal-body">
+
+            <label for="taskInput">
+                Task title
+            </label>
+
+            <input
+                type="text"
+                id="taskInput"
+                placeholder="Enter your task..."
+            >
+
+            <p id="modalError" class="modal-error"></p>
+
+        </div>
+
+        <div class="modal-footer">
+
+            <button
+                class="cancel-button"
+                onclick="closeTaskModal()"
+            >
+                Cancel
+            </button>
+
+            <button
+                class="save-button"
+                onclick="saveTask()"
+            >
+                Add Task
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================
+     DELETE MODAL
+     ========================= -->
+
+<div id="deleteModal" class="modal">
+
+    <div class="modal-content delete-modal">
+
+        <div class="modal-header">
+
+            <h2>Delete Task</h2>
+
+            <button
+                class="close-button"
+                onclick="closeDeleteModal()"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <div class="modal-body">
+
+            <p>
+                Are you sure you want to delete this task?
+            </p>
+
+            <p class="delete-warning">
+                This action cannot be undone.
+            </p>
+
+        </div>
+
+        <div class="modal-footer">
+
+            <button
+                class="cancel-button"
+                onclick="closeDeleteModal()"
+            >
+                Cancel
+            </button>
+
+            <button
+                class="delete-confirm-button"
+                onclick="confirmDelete()"
+            >
+                Delete
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script src="script.js"></script>
+   
+
+</body>
+
+</html>

@@ -1,0 +1,324 @@
+const express = require("express");
+const cors = require("cors");
+const mysql = require("mysql2/promise");
+
+const app = express();
+const PORT = 3000;
+
+app.use(cors());
+app.use(express.json());
+
+const dbConfig = {
+    host: process.env.DB_HOST || "localhost",
+    port: Number(process.env.DB_PORT || 3306),
+    user: process.env.DB_USER || "tasks_user",
+    password: process.env.DB_PASSWORD || "tasks_password",
+    database: process.env.DB_NAME || "tasks_db"
+};
+
+let db;
+
+async function connectWithRetry() {
+
+    while (true) {
+
+        try {
+
+            db = await mysql.createPool(dbConfig);
+
+            await db.query(`
+                CREATE TABLE IF NOT EXISTS tasks (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    title VARCHAR(255) NOT NULL,
+                    completed BOOLEAN DEFAULT FALSE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            `);
+
+            const [rows] = await db.query(
+                "SELECT COUNT(*) AS count FROM tasks"
+            );
+
+            if (rows[0].count === 0) {
+
+                await db.query(
+                    "INSERT INTO tasks (title, completed) VALUES (?, ?), (?, ?)",
+                    [
+                        "Apprendre Docker",
+                        true,
+                        "Apprendre Kubernetes",
+                        false
+                    ]
+                );
+            }
+
+            console.log("Connexion à MySQL réussie !");
+
+            return;
+
+        } catch (error) {
+
+            console.log(
+                "MySQL n'est pas encore disponible. Nouvelle tentative dans 3 secondes..."
+            );
+
+            await new Promise(resolve => setTimeout(resolve, 3000));
+        }
+    }
+}
+
+
+/*
+========================================
+        ROUTES
+========================================
+*/
+
+
+// Test du backend
+app.get("/", (req, res) => {
+
+    res.json({
+        message: "K8s Task Manager Backend fonctionne !"
+    });
+
+});
+
+
+// ========================================
+// GET — récupérer toutes les tâches
+// ========================================
+
+app.get("/api/tasks", async (req, res) => {
+
+    try {
+
+        const [tasks] = await db.query(
+            "SELECT id, title, completed FROM tasks ORDER BY id"
+        );
+
+        res.json(tasks);
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            error: "Erreur lors de la récupération des tâches"
+        });
+
+    }
+
+});
+
+
+// ========================================
+// GET — récupérer une seule tâche par ID
+// ========================================
+
+app.get("/api/tasks/:id", async (req, res) => {
+
+    try {
+
+        const id = Number(req.params.id);
+
+        if (!Number.isInteger(id)) {
+            return res.status(400).json({ error: "ID invalide" });
+        }
+
+        const [tasks] = await db.query(
+            "SELECT id, title, completed FROM tasks WHERE id = ?",
+            [id]
+        );
+
+        if (tasks.length === 0) {
+            return res.status(404).json({ error: "Tâche introuvable" });
+        }
+
+        res.json(tasks[0]);
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            error: "Erreur lors de la récupération de la tâche"
+        });
+
+    }
+
+});
+
+
+// ========================================
+// POST — créer une tâche
+// ========================================
+
+app.post("/api/tasks", async (req, res) => {
+
+    try {
+
+        const { title } = req.body;
+
+        if (!title || title.trim() === "") {
+
+            return res.status(400).json({
+                error: "Le titre de la tâche est obligatoire"
+            });
+
+        }
+
+        const [result] = await db.query(
+            "INSERT INTO tasks (title, completed) VALUES (?, ?)",
+            [title.trim(), false]
+        );
+
+        const [tasks] = await db.query(
+            "SELECT id, title, completed FROM tasks WHERE id = ?",
+            [result.insertId]
+        );
+
+        res.status(201).json(tasks[0]);
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            error: "Erreur lors de la création de la tâche"
+        });
+
+    }
+
+});
+
+
+// ========================================
+// PUT — modifier une tâche
+// ========================================
+
+app.put("/api/tasks/:id", async (req, res) => {
+
+    try {
+
+        const id = Number(req.params.id);
+        const { title, completed } = req.body;
+
+        if (!Number.isInteger(id)) {
+
+            return res.status(400).json({
+                error: "ID invalide"
+            });
+
+        }
+
+        const [existing] = await db.query(
+            "SELECT id, title, completed FROM tasks WHERE id = ?",
+            [id]
+        );
+
+        if (existing.length === 0) {
+
+            return res.status(404).json({
+                error: "Tâche introuvable"
+            });
+
+        }
+
+        const currentTask = existing[0];
+
+        const newTitle = title !== undefined ? title : currentTask.title;
+        const newCompleted = completed !== undefined ? completed : currentTask.completed;
+
+        await db.query(
+            "UPDATE tasks SET title = ?, completed = ? WHERE id = ?",
+            [newTitle, newCompleted, id]
+        );
+
+        const [tasks] = await db.query(
+            "SELECT id, title, completed FROM tasks WHERE id = ?",
+            [id]
+        );
+
+        res.json(tasks[0]);
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            error: "Erreur lors de la modification de la tâche"
+        });
+
+    }
+
+});
+
+
+// ========================================
+// DELETE — supprimer une tâche
+// ========================================
+
+app.delete("/api/tasks/:id", async (req, res) => {
+
+    try {
+
+        const id = Number(req.params.id);
+
+        if (!Number.isInteger(id)) {
+
+            return res.status(400).json({
+                error: "ID invalide"
+            });
+
+        }
+
+        const [result] = await db.query(
+            "DELETE FROM tasks WHERE id = ?",
+            [id]
+        );
+
+        if (result.affectedRows === 0) {
+
+            return res.status(404).json({
+                error: "Tâche introuvable"
+            });
+
+        }
+
+        res.status(204).send();
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            error: "Erreur lors de la suppression de la tâche"
+        });
+
+    }
+
+});
+
+
+/*
+========================================
+        START SERVER
+========================================
+*/
+
+async function startServer() {
+
+    await connectWithRetry();
+
+    app.listen(PORT, () => {
+
+        console.log(
+            `Backend démarré sur le port ${PORT}`
+        );
+
+    });
+
+}
+
+startServer();
