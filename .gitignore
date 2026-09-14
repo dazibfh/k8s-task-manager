@@ -33,3 +33,4 @@ data/
 
 # Kubernetes local secrets
 *-secret.local.yaml
+k8s/mysql/mysql-secret.yaml
