@@ -1,0 +1,49 @@
+name: CD - Publish Docker Images
+
+on:
+  workflow_run:
+    workflows:
+      - "CI - Build and Test"
+    types:
+      - completed
+
+jobs:
+  publish:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ghcr.io/dazibfh/k8s-task-manager-backend:latest
+            ghcr.io/dazibfh/k8s-task-manager-backend:${{ github.event.workflow_run.head_sha }}
+
+      - name: Build and push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ghcr.io/dazibfh/k8s-task-manager-frontend:latest
+            ghcr.io/dazibfh/k8s-task-manager-frontend:${{ github.event.workflow_run.head_sha }}
