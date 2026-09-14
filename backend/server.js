@@ -469,7 +469,17 @@ app.delete("/api/tasks/:id", async (req, res) => {
 
 });
 
+// ========================================
+// HEALTH CHECK
+// ========================================
 
+app.get("/health", (req, res) => {
+
+    res.status(200).json({
+        status: "OK"
+    });
+
+});
 /*
 ========================================
            START SERVER
@@ -482,7 +492,20 @@ async function startServer() {
 
         // Attendre que MySQL soit disponible
         await connectWithRetry();
-
+app.get("/health", async (req, res) => {
+    try {
+        await db.query("SELECT 1");
+        res.status(200).json({
+            status: "ok",
+            database: "connected"
+        });
+    } catch (error) {
+        res.status(503).json({
+            status: "error",
+            database: "disconnected"
+        });
+    }
+});
         // Démarrer Express
         app.listen(PORT, "0.0.0.0", () => {
 
