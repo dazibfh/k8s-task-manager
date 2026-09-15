@@ -1,0 +1,38 @@
+name: Deploy to Kubernetes
+
+on:
+  workflow_run:
+    workflows:
+      - "CD - Publish Docker Images"
+    types:
+      - completed
+
+jobs:
+  deploy:
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main'
+
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+
+    steps:
+      - name: Check Kubernetes
+        run: kubectl get nodes
+
+      - name: Restart backend
+        run: kubectl rollout restart deployment/backend
+
+      - name: Restart frontend
+        run: kubectl rollout restart deployment/frontend
+
+      - name: Wait for backend
+        run: kubectl rollout status deployment/backend --timeout=120s
+
+      - name: Wait for frontend
+        run: kubectl rollout status deployment/frontend --timeout=120s
+
+      - name: Show pods
+        run: kubectl get pods
