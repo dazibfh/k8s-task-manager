@@ -1,0 +1,36 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+
+metadata:
+  name: backend-email-alerts
+  namespace: monitoring
+  labels:
+    release: monitoring
+
+spec:
+  route:
+    receiver: backend-email
+
+    matchers:
+      - name: alertname
+        value: BackendDown
+        matchType: "="
+
+    groupBy:
+      - alertname
+
+    groupWait: 10s
+    groupInterval: 5m
+    repeatInterval: 4h
+
+  receivers:
+    - name: backend-email
+      emailConfigs:
+        - to: ismail.plusplus@gmail.com
+          from: ismail.plusplus@gmail.com
+          smarthost: smtp.gmail.com:587
+          authUsername: ismail.plusplus@gmail.com
+          authPassword:
+            name: alertmanager-gmail
+            key: app-password
+          requireTLS: true
