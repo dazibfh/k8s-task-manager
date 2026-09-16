@@ -1,6 +1,5 @@
 apiVersion: apps/v1
 kind: Deployment
-
 metadata:
   name: frontend
 
@@ -19,8 +18,8 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: k8s-task-manager-frontend:latest
-          imagePullPolicy: Never
+          image: ghcr.io/dazibfh/k8s-task-manager-frontend:latest
+          imagePullPolicy: Always
 
           ports:
             - containerPort: 80

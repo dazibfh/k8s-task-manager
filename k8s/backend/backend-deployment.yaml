@@ -18,8 +18,12 @@ spec:
     spec:
       containers:
         - name: backend
-          image: k8s-task-manager-backend:latest
-          imagePullPolicy: Never
+          image: ghcr.io/dazibfh/k8s-task-manager-backend:latest
+          imagePullPolicy: Always
+
+          ports:
+            - containerPort: 3000
+
           readinessProbe:
             httpGet:
               path: /health
@@ -33,9 +37,6 @@ spec:
               port: 3000
             initialDelaySeconds: 15
             periodSeconds: 20
-
-          ports:
-            - containerPort: 3000
 
           env:
             - name: DB_HOST
