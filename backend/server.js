@@ -1,3 +1,4 @@
+const client = require("prom-client");
 const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2/promise");
@@ -7,6 +8,11 @@ const PORT = 3000;
 
 app.use(cors());
 app.use(express.json());
+const register = new client.Registry();
+
+client.collectDefaultMetrics({
+    register: register
+});
 
 const dbConfig = {
     host: process.env.DB_HOST || "localhost",
@@ -479,6 +485,10 @@ app.get("/health", (req, res) => {
         status: "OK"
     });
 
+});
+app.get("/metrics", async (req, res) => {
+    res.set("Content-Type", register.contentType);
+    res.end(await register.metrics());
 });
 /*
 ========================================
